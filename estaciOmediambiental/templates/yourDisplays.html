@@ -1,0 +1,135 @@
+{% extends "base.html" %} {% load static %} {% block title %}Displays{% endblock%} {% block content %}
+
+<main>
+    <div class="container">
+        <p class="bd-title fw-bolder">Your active displays:</p>
+        <a href="/addDisplay" type="button" class="btn btn-dark">Add Displays</a>
+        <br /><br />
+        <div id="rasps" style="display: flex; justify-content: flex-start; flex-wrap: wrap"></div>
+
+        <br /><br /><br />
+        <p class="bd-title fw-bolder">Your displays in quarantine:</p>
+        <div id="rasps_quarentena" style="display: flex; justify-content: flex-start; flex-wrap: wrap"></div>
+    </div>
+</main>
+
+{% endblock %} {% block scripts %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.bundle.min.js"
+    integrity="sha512-SuxO9djzjML6b9w9/I07IWnLnQhgyYVSpHZx0JV97kGBfTIsUYlWflyuW4ypnvhBrslz1yJ3R+S14fdCWmSmSA=="
+    crossorigin="anonymous"></script>
+
+<script src="{% static 'scripts/js/ajax.js' %}"></script>
+<script src="{% static 'scripts/js/dash.js' %}"></script>
+
+<script>
+    if (getCookie("loginToken") == "") {
+        location.href = "/logIn";
+    }
+
+    var raspberry = {
+        id: 1,
+        identificador: "Raspberry Home",
+        localitzacio: "Tona",
+        quarentena: false,
+    };
+
+    var raspberry2 = {
+        id: 2,
+        identificador: "Raspberry Home",
+        localitzacio: "Tona",
+        quarentena: true,
+    };
+
+    var raspberrys = [
+        raspberry,
+        raspberry,
+        raspberry2,
+        raspberry,
+        raspberry2,
+        raspberry,
+        raspberry2,
+        raspberry2,
+        raspberry,
+        raspberry,
+        raspberry,
+        raspberry,
+        raspberry,
+    ];
+
+    http.call({
+        method: "get",
+        url: api.url + "/clients",
+        object: true,
+        headers: [
+            {
+                header: "Authorization",
+                value: "Token " + loginToken,
+            },
+
+        ],
+        error: function (response) {
+            //console.log(response);
+        },
+        success: function (response) {
+            console.log(response);
+            raspberrys = response;
+            carregarElements();
+        },
+    });
+
+    function carregarElements() {
+        raspberrys.forEach(addElements);
+        function addElements(item, index, arr) {
+            if (!item.quarentena) {
+                var mainDiv = document.createElement("div");
+                mainDiv.setAttribute("class", "mainRasp");
+                mainDiv.innerHTML =
+                    '<a href="/display?id=' +
+                    item.id +
+                    '" class="linkdiv">' +
+                    '  <div style="width: 100%; display: flex; justify-content: center">' +
+                    '      <svg xmlns="http://www.w3.org/2000/svg" width="130" height="130" fill="currentColor" class="bi bi-tv" viewBox="0 0 16 16">' +
+                    '          <path d="M2.5 13.5A.5.5 0 0 1 3 13h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zM13.991 3l.024.001a1.46 1.46 0 0 1 .538.143.757.757 0 0 1 .302.254c.067.1.145.277.145.602v5.991l-.001.024a1.464 1.464 0 0 1-.143.538.758.758 0 0 1-.254.302c-.1.067-.277.145-.602.145H2.009l-.024-.001a1.464 1.464 0 0 1-.538-.143.758.758 0 0 1-.302-.254C1.078 10.502 1 10.325 1 10V4.009l.001-.024a1.46 1.46 0 0 1 .143-.538.758.758 0 0 1 .254-.302C1.498 3.078 1.675 3 2 3h11.991zM14 2H2C0 2 0 4 0 4v6c0 2 2 2 2 2h12c2 0 2-2 2-2V4c0-2-2-2-2-2z"/>' +
+                    "      </svg>" +
+                    "  </div>" +
+                    '<h3 align="center">' + item.identificador + "</h3>" +
+                    "</a>";
+                document.getElementById("rasps").append(mainDiv);
+            } else {
+                var mainDiv = document.createElement("div");
+                mainDiv.setAttribute("class", "mainRasp");
+                mainDiv.innerHTML =
+                    '<a href="/display?id=' +
+                    item.id +
+                    '" class="linkdiv">' +
+                    '  <div style="width: 100%; display: flex; justify-content: center">' +
+                    '      <svg xmlns="http://www.w3.org/2000/svg" width="130" height="130" fill="currentColor" class="bi bi-tv" viewBox="0 0 16 16">' +
+                    '          <path d="M2.5 13.5A.5.5 0 0 1 3 13h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zM13.991 3l.024.001a1.46 1.46 0 0 1 .538.143.757.757 0 0 1 .302.254c.067.1.145.277.145.602v5.991l-.001.024a1.464 1.464 0 0 1-.143.538.758.758 0 0 1-.254.302c-.1.067-.277.145-.602.145H2.009l-.024-.001a1.464 1.464 0 0 1-.538-.143.758.758 0 0 1-.302-.254C1.078 10.502 1 10.325 1 10V4.009l.001-.024a1.46 1.46 0 0 1 .143-.538.758.758 0 0 1 .254-.302C1.498 3.078 1.675 3 2 3h11.991zM14 2H2C0 2 0 4 0 4v6c0 2 2 2 2 2h12c2 0 2-2 2-2V4c0-2-2-2-2-2z"/>' +
+                    "      </svg>" +
+                    "  </div>" +
+                    '<h3 align="center">' +
+                    item.identificador +
+                    "</h3>" +
+                    "</a>";
+                document.getElementById("rasps_quarentena").append(mainDiv);
+            }
+        }
+        var mainDiv = document.createElement("DIV");
+        mainDiv.setAttribute("class", "mainRaspINV");
+        document.getElementById("rasps").append(mainDiv);
+        document.getElementById("rasps_quarentena").append(mainDiv);
+
+        var mainDiv = document.createElement("DIV");
+        mainDiv.setAttribute("class", "mainRaspINV");
+        document.getElementById("rasps").append(mainDiv);
+        document.getElementById("rasps_quarentena").append(mainDiv);
+
+        var mainDiv = document.createElement("DIV");
+        mainDiv.setAttribute("class", "mainRaspINV");
+        document.getElementById("rasps").append(mainDiv);
+        document.getElementById("rasps_quarentena").append(mainDiv);
+    }
+</script>
+
+{% endblock %}

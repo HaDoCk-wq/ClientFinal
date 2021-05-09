@@ -1,0 +1,220 @@
+{% extends "base.html" %} {% load static %} {% block title%}Displays{%endblock%}
+{% block content %}
+
+<main>
+  <div class="container" style="max-width: 1700px">
+    <div class="d-flex flex-wrap">
+      <p id="titol" class="bd-title fw-bolder mt-2"></p>
+      <div class="flex-fill"></div>
+      <div id="botoEliminar"></div>
+    </div>
+    <br />
+    <h2 id="localitzacio" class="fw-bolder mt-2"></h2>
+    <br />
+    <h2 id="titolSensors" class="fw-bolder mt-2"></h2>
+    <div id="sensors" class="fw-bolder mt-2"></div>
+    <br />
+    <div id="json" class="fw-bolder mt-2"></div>
+    <br />
+    <br />
+    <main id="main"></main>
+  </div>
+</main>
+
+{% endblock %} {% block scripts %}
+
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.bundle.min.js"
+  integrity="sha512-SuxO9djzjML6b9w9/I07IWnLnQhgyYVSpHZx0JV97kGBfTIsUYlWflyuW4ypnvhBrslz1yJ3R+S14fdCWmSmSA=="
+  crossorigin="anonymous"
+></script>
+
+<script src="{% static 'scripts/js/ajax.js' %}"></script>
+<script src="{% static 'scripts/js/dash.js' %}"></script>
+
+<script>
+
+    if (getCookie('loginToken') == "") {
+        location.href = "/logIn"
+    }
+
+    http.call({
+        method: "get",
+        url: api.url + "/GetClient?id={{id}}",
+        object: true,
+        headers: [
+            {
+                header: "Authorization",
+                value: "Token " + loginToken,
+            },
+        ],
+        error: function (response) {
+            //console.log(response);
+        },
+        success: function (response) {
+            console.log(response)
+            document.getElementById('titol').innerText = response.identificador;
+            //document.getElementById('localitzacio').innerText = response.getLocation.localitat + ", " + response.getLocation.pais;
+
+            var h2 = document.createElement('h2');
+            h2.innerText = "Sensors";
+            document.getElementById('titolSensors').appendChild(h2);
+
+            for (sensor in response.getSensors) {
+                var p = document.createElement('p');
+                var hr = document.createElement('hr');
+                p.innerText = sensor;
+                document.getElementById('sensors').appendChild(hr);
+                document.getElementById('sensors').appendChild(p);
+            }
+
+            var jsonDiv = document.getElementById('json');
+            jsonDiv.classList.add("alert");
+            jsonDiv.classList.add("alert-info");
+            var stringSensors = "";
+            for (sensor in response.getSensors) {
+                stringSensors += `\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0 {${sensor}: 40},\n`;
+            }
+
+            var jsonWraper = document.createElement("div");
+
+            var titolJson = document.createElement("h2");
+            titolJson.innerText = "Example body request";
+            jsonDiv.appendChild(titolJson)
+
+            if (response.movil) {
+                jsonWraper.innerText = `
+            {
+                \u00A0\u00A0\u00A0\u00A0"token": ${response.token},
+                \u00A0\u00A0\u00A0\u00A0"hora": "1970-01-01 00:00:01",
+                \u00A0\u00A0\u00A0\u00A0"lat": -4.60,
+                \u00A0\u00A0\u00A0\u00A0"long": 5.73,
+                \u00A0\u00A0\u00A0\u00A0"data": {
+                ${stringSensors}
+                \u00A0\u00A0\u00A0\u00A0},
+            }
+            `;
+            } else {
+                jsonWraper.innerText = `
+            {
+                \u00A0\u00A0\u00A0\u00A0"token": ${response.token},
+                \u00A0\u00A0\u00A0\u00A0"hora": "1970-01-01 00:00:01",
+                \u00A0\u00A0\u00A0\u00A0"data": {
+                ${stringSensors}
+                \u00A0\u00A0\u00A0\u00A0},
+            }
+            `;
+            }
+
+            jsonDiv.appendChild(jsonWraper);
+
+            var botoEliminar = document.getElementById("botoEliminar");
+            var boto = document.createElement("button")
+            boto.classList.add("btn");
+            boto.classList.add("mt-4");
+            boto.classList.add("btn-danger");
+            boto.innerText = "delete"
+            boto.addEventListener("click", function () {
+                http.call({
+                    method: "post",
+                    url: api.url + "/deleteClient",
+                    object: true,
+                    headers: [
+                        {
+                            header: "Authorization",
+                            value: "Token " + loginToken,
+                        },
+                        {
+                            header: "Content-Type",
+                            value: "application/json"
+                        },
+                        {
+                            header: "Accept",
+                            value: "application/json"
+                        }
+                    ],
+                    data: JSON.stringify({ "id": {{ id }} }),
+                error: function (response) {
+
+                    //console.log(response);
+                },
+            success: function (response) {
+                //console.log(response)
+                console.log(response);
+                window.location.href = '/yourDisplays';
+            },
+        });
+          });
+    botoEliminar.appendChild(boto);
+
+      },
+  });
+
+    http.call({
+        method: "get",
+        url: api.url + "/ValuesFromClient?id={{id}}",
+        object: true,
+        headers: [
+            {
+                header: "Authorization",
+                value: "Token " + loginToken,
+            },
+        ],
+        error: function (response) {
+
+            //console.log(response);
+        },
+        success: function (response) {
+            //console.log(response)
+
+            for (tipus in response) {
+                var dataChart = JSON.parse(tipus)
+                //console.log(tipus, response[tipus])
+                var main = document.getElementById('main');
+                var h2 = document.createElement('h2');
+                h2.innerText = dataChart.tipus;
+                main.appendChild(h2);
+                var ctx = document.createElement('canvas');
+                ctx.classList.add('mb-2');
+                main.appendChild(ctx);
+                var br = document.createElement('br');
+                main.appendChild(br);
+
+                console.log(response[tipus])
+                llistaHores = [];
+                llistaValors = [];
+                for (registre in response[tipus]) {
+                    llistaHores.push(response[tipus][registre].hora);
+                    llistaValors.push(response[tipus][registre].valor);
+                }
+
+                var chart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: llistaHores,
+                        datasets: [{
+                            label: dataChart.tipus + " " + dataChart.unitatMesura,
+                            data: llistaValors,
+                            backgroundColor: "rgba(0, 153, 204, 0.2)",
+                            borderColor: "rgba(0, 102, 204, 1)",
+                            borderWidth: 1
+                        }],
+                    },
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                ticks: {
+                                    beginAtZero: true
+                                }
+                            }]
+                        }
+                    }
+                });
+            }
+
+
+        },
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,108 @@
+{% extends "base.html" %} {% load static %} {% block title %}Log in
+{% endblock %} {% block content %}
+
+<main>
+    <div class="container">
+        <div style="max-width: 600px; margin: auto">
+            <h1 style="margin-top: 200px" align="center">Log In</h1>
+            <br />
+            <div class="form-group">
+                <h4 for="exampleFormControlInput1">Email or Username</h4>
+                <input type="text" class="form-control" name="usernameLog" id="usernameLog" />
+            </div>
+            <br />
+
+            <div class="form-group">
+                <h4 for="exampleFormControlInput1">Password</h4>
+                <input type="password" class="form-control" name="passLog" id="passLog" />
+            </div>
+
+            <br />
+            <div style="display: flex; justify-content: space-between">
+                <a href="/signIn" class="btn btn-dark">
+                    <svg style="margin-right: 5px; margin-top: -3px" xmlns="http://www.w3.org/2000/svg" width="23"
+                        height="23" fill="currentColor" class="bi bi-plus" viewBox="0 0 16 16">
+                        <path
+                            d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
+                    </svg>
+                    Create an account</a>
+                <button onclick="login()" class="btn btn-dark">
+                    Continue
+                    <svg style="margin-left: 5px; margin-top: -3px" xmlns="http://www.w3.org/2000/svg" width="23"
+                        height="23" fill="currentColor" class="bi bi-arrow-right" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd"
+                            d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z" />
+                    </svg>
+                </button>
+            </div>
+            <br /><br /><br /><br /><br />
+        </div>
+    </div>
+</main>
+
+<div class="modal fade" id="modalIncorrecte" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Login incorrecte</h5>
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %} {% block scripts %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.bundle.min.js"
+    integrity="sha512-SuxO9djzjML6b9w9/I07IWnLnQhgyYVSpHZx0JV97kGBfTIsUYlWflyuW4ypnvhBrslz1yJ3R+S14fdCWmSmSA=="
+    crossorigin="anonymous"></script>
+
+<script src="{% static 'scripts/js/ajax.js' %}"></script>
+<script src="{% static 'scripts/js/dash.js' %}"></script>
+
+<script>
+    if (getCookie("loginToken") != "") {
+        location.href = "/";
+    }
+
+    var modalIncorrecte = new bootstrap.Modal(
+        document.getElementById("modalIncorrecte")
+    );
+
+    function login() {
+        console.log(
+            document.getElementById("usernameLog").value,
+            document.getElementById("passLog").value
+        );
+        http.call({
+            //"Content-Type", "application/x-www-form-urlencoded"
+            method: "post",
+            url: api.url + "/api-token-auth/",
+            headers: [
+                {
+                    header: "Content-Type",
+                    value: "application/json",
+                    //ec12a4aba5efad5db763fb66c745be3caa6de822
+                },
+            ],
+            data: JSON.stringify({
+                username: document.getElementById("usernameLog").value,
+                password: document.getElementById("passLog").value,
+            }),
+            object: true,
+            error: function (response) {
+                console.log(response);
+                modalIncorrecte.show();
+            },
+            success: function (response) {
+                console.log(response);
+                setCookie("loginToken", response.token, 4);
+                location.href = "/yourDisplays";
+            },
+        });
+    }
+</script>
+
+{% endblock %}

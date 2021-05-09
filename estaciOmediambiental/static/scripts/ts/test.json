@@ -1,0 +1,9 @@
+{
+  "select": ["nom", "edat"],
+  "from": "alumnes",
+  "where": [
+    { "nom": "pere" },
+    { "edat": {">": 18} },
+    { "avg(nota)": {"=>": 7} }
+  ]
+}

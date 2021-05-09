@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Displays{% endblock %}
+
+{% block content %}
+
+
+<main>
+    <div class="container" style="max-width: 800px">
+        <p class="bd-title fw-bolder" style="margin-top: 10vh">New display:</p>
+        <form onsubmit="ferSubmit(event)">
+            <h3>Display name</h3>
+            <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="displayName" placeholder="name@example.com">
+                <label for="floatingInput">Display name</label>
+            </div>
+
+            <h3>Sensors</h3>
+            <div class="form-floating">
+                <input type="number" class="form-control" id="numeroSensors" onchange="afegeixQuantitatSensors(this)"
+                    value="0">
+                <label for="numeroSensors">Quantitat de sensors</label>
+            </div>
+            <br>
+            <div class="form-group">
+                <div style="margin-bottom: 5px" id="llistaSensors">
+                </div>
+            </div>
+            <div class="alert alert-warning" role="alert">
+                <strong>Remember: </strong> The names that you use are the ones we expect on the send data method.
+            </div>
+            <br>
+
+            <div class="form-group">
+
+                <h3>
+                    Display location
+                </h3>
+
+                <nav>
+                    <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                        <button class="nav-link active" onclick="locationTab = 'existent'" id="nav-home-tab"
+                            data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab"
+                            aria-controls="nav-home" aria-selected="true">Existent</button>
+                        <button class="nav-link" onclick="locationTab = 'add'" id="nav-profile-tab" data-bs-toggle="tab"
+                            data-bs-target="#nav-profile" type="button" role="tab" aria-controls="nav-profile"
+                            aria-selected="false">Chords</button>
+                        <button class="nav-link" onclick="locationTab = 'movil'" id="nav-movil-tab" data-bs-toggle="tab"
+                            data-bs-target="#nav-movil" type="button" role="tab" aria-controls="nav-movil"
+                            aria-selected="false">Movile</button>
+                    </div>
+                </nav>
+                <div class="tab-content" id="nav-tabContent">
+                    <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+                        <br>
+                        <h4>Select a location existent in our database</h4>
+                        <br>
+
+                        <div class="form-floating">
+                            <select class="form-select" id="datalistLocation" style="height: 65px;"
+                                aria-label="Floating label select example">
+
+                            </select>
+                            <label for="floatingSelect">Select location</label>
+                        </div>
+
+                    </div>
+                    <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
+                        <br>
+                        <h4>Add a new location to the database or if the location exist it will relate to that location
+                        </h4>
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="latitude" placeholder="Latitude">
+                            <label for="floatingInput">Latitude</label>
+                        </div>
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="longitude" placeholder="Longitude">
+                            <label for="floatingPassword">Longitude</label>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="nav-movil" role="tabpanel" aria-labelledby="nav-movil-tab">
+                        <br>
+                        <h4> If your device is gona be moving select this option</h4>
+
+                    </div>
+                </div>
+
+            </div><br>
+
+            <button type="submit" class="btn btn-dark">
+                <svg style="margin-right: 5px; margin-top: -3px" xmlns="http://www.w3.org/2000/svg" width="23"
+                    height="23" fill="currentColor" class="bi bi-plus" viewBox="0 0 16 16">
+                    <path
+                        d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
+                </svg>
+                Save</button>
+            <br>
+            <br>
+            <div id="alert">
+            </div>
+        </form>
+    </div>
+</main>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+    if (getCookie('loginToken') == "") {
+        location.href = "/logIn"
+    }
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.bundle.min.js"
+    integrity="sha512-SuxO9djzjML6b9w9/I07IWnLnQhgyYVSpHZx0JV97kGBfTIsUYlWflyuW4ypnvhBrslz1yJ3R+S14fdCWmSmSA=="
+    crossorigin="anonymous"></script>
+
+<script src="{% static 'scripts/js/ajax.js' %}"></script>
+<script src="{% static 'scripts/js/dash.js' %}"></script>
+
+<script>
+    var llistaSensors = [];
+    var optionsSensors = "";
+    var sensorsActuals = [];
+    var iteradorSensors = 0;
+    var locationTab = "existent"
+
+    http.call({
+        method: "get",
+        url: api.url + "/SensorType",
+        object: true,
+        headers: [
+            {
+                header: "Authorization",
+                value: "Token " + loginToken,
+            },
+        ],
+        error: function (response) {
+            //console.log(response);
+        },
+        success: function (response) {
+            console.log(response)
+            llistaSensors = response;
+            var stringSensorsOptions = "";
+            for (const tipus of response) {
+                stringSensorsOptions += `<option value="${tipus.id}">${tipus.tipus} | ${tipus.unitatMesura}</option>`;
+            }
+            optionsSensors = stringSensorsOptions;
+        },
+    });
+
+    http.call({
+        method: "get",
+        url: api.url + "/AllLocalitzacions",
+        object: true,
+        headers: [
+            {
+                header: "Authorization",
+                value: "Token " + loginToken,
+            },
+        ],
+        error: function (response) {
+            //console.log(response);
+        },
+        success: function (response) {
+            //           <option value="San Francisco">
+            console.log(response);
+            var stringOptionsPaisos = "";
+            for (let i = 0; i < response.length; i++) {
+                stringOptionsPaisos += `<option value="${i}">${response[i].localitat} | ${response[i].pais} | Lat: ${response[i].latitud}, Long: ${response[i].longitud}</option>`;
+            }
+
+            document.getElementById("datalistLocation").innerHTML = stringOptionsPaisos;
+        },
+    });
+
+    function afegeixSensor(event) {
+        var sensors = document.getElementById('llistaSensors');
+        sensors.innerHTML += `
+       <div style="display: flex; justify-content: space-between" class="mb-3" id="nouSensor${iteradorSensors}">
+            <select class="form-select  me-2" aria-label="Default select example" onchange="actualitzaSensor(${iteradorSensors})" id="tipusNouSensor${iteradorSensors}">
+            ${optionsSensors}
+            </select>
+            <input type="text" onkeyup="actualitzaSensor(${iteradorSensors})" id="nomSensorNou${iteradorSensors}" class="form-control" placeholder="Name of sensor">
+        </div>
+        `;
+
+        var stringId = String(llistaSensors[0].id)
+        sensorsActuals[iteradorSensors] = {
+            type: stringId,
+            name: ""
+        }
+
+        iteradorSensors++;
+    }
+
+    function eliminaPare(id) {
+        document.getElementById("nouSensor" + id).remove();
+    }
+
+    function ferSubmit(event) {
+        event.preventDefault()
+
+        switch (locationTab) {
+            case "existent":
+                http.call({
+                    method: "post",
+                    url: api.url + "/AddClient/ExistentLocation",
+                    object: true,
+                    headers: [
+                        {
+                            header: "Authorization",
+                            value: "Token " + loginToken,
+                        },
+                        {
+                            header: "Content-Type",
+                            value: "application/json",
+                        },
+                    ],
+                    data: JSON.stringify({
+                        "name": document.getElementById("displayName").value,
+                        "sensors": sensorsActuals,
+                        "location": document.getElementById("datalistLocation").value
+                    }),
+                    error: function (response) {
+                        mostraAlerta()
+                    },
+                    success: function (response) {
+                        window.location.href = "/display?id=" + response
+                    },
+                });
+                break;
+
+            case "add":
+                http.call({
+                    method: "post",
+                    url: api.url + "/AddClient/NewLocation",
+                    object: true,
+                    headers: [
+                        {
+                            header: "Authorization",
+                            value: "Token " + loginToken,
+                        },
+                        {
+                            header: "Content-Type",
+                            value: "application/json",
+                        },
+                    ],
+                    data: JSON.stringify({
+                        "name": document.getElementById("displayName").value,
+                        "sensors": sensorsActuals,
+                        "lat": document.getElementById("latitude").value,
+                        "long": document.getElementById("longitude").value,
+                    }),
+                    error: function (response) {
+                        mostraAlerta()
+                    },
+                    success: function (response) {
+                        window.location.href = "/display?id=" + response
+                    },
+                });
+                break;
+
+            case "movil":
+                http.call({
+                    method: "post",
+                    url: api.url + "/AddClient/Movil",
+                    object: true,
+                    headers: [
+                        {
+                            header: "Authorization",
+                            value: "Token " + loginToken,
+                        },
+                        {
+                            header: "Content-Type",
+                            value: "application/json",
+                        },
+                    ],
+                    data: JSON.stringify({
+                        "name": document.getElementById("displayName").value,
+                        "sensors": sensorsActuals,
+                    }),
+                    error: function (response) {
+                        mostraAlerta()
+                    },
+                    success: function (response) {
+                        window.location.href = "/display?id=" + response
+                    },
+                });
+                break;
+        }
+
+    }
+
+    function actualitzaSensor(iteradorSensors) {
+        sensorsActuals[iteradorSensors] = {
+            type: document.getElementById("tipusNouSensor" + iteradorSensors).value,
+            name: document.getElementById("nomSensorNou" + iteradorSensors).value
+        }
+    }
+
+    function afegeixQuantitatSensors(input) {
+        sensorsActuals = [];
+        document.getElementById('llistaSensors').innerHTML = "";
+        for (let i = 0; i < input.value; i++) {
+            afegeixSensor();
+        }
+        iteradorSensors = 0
+    }
+
+    function mostraAlerta() {
+        document.getElementById("alert").innerHTML = `
+        <div class="alert alert-danger d-flex align-items-center " role="alert">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-exclamation-triangle-fill me-2" viewBox="0 0 16 16">
+                <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+            </svg>
+            <div>
+                Has de omplir totes las dades
+            </div>
+            <div class="flex-fill"> </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        `
+    }
+
+</script>
+
+{% endblock %}

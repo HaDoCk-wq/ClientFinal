@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Map{% endblock %}
+
+{% block content %}
+
+
+
+<main class="p-0">
+    <div class="container-fluid p-0">
+
+        <div id="world-map" style="background-color: #383f47;" class="container-fluid p-0 map"></div>
+
+    </div>
+</main>
+
+<div class="modal fade" id="modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Select country</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h5>Choose a country to open the map</h5>
+                <select onchange='location.href = "/map" + (this.value != "all" ? "?pais=" + this.value : "")'
+                    class="form-select" id="selectPaisLocation" aria-label="">
+                    <option value="all" selected>All countries</option>
+                </select>
+                <hr>
+                <h5> Choose a country to add data to the map</h5>
+                <select class="form-select mb-1" id="selectPais" aria-label="">
+                    <option value="" selected>All countries</option>
+                </select>
+                <h6 class="text-muted">This will do nothing if all the countries are already shown</h6>
+            </div>
+            <div class="modal-footer">
+                <button type="button" onclick="tornaACercar()" class="btn btn-dark">Select</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.bundle.min.js"
+    integrity="sha512-SuxO9djzjML6b9w9/I07IWnLnQhgyYVSpHZx0JV97kGBfTIsUYlWflyuW4ypnvhBrslz1yJ3R+S14fdCWmSmSA=="
+    crossorigin="anonymous"></script>
+
+<script src="{% static 'scripts/js/ajax.js' %}"></script>
+<script src="{% static 'dades/paisos.js' %}"></script>
+<script src="{% static 'scripts/js/dash.js' %}"></script>
+
+<script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAng9Jc4kke3YJE8iZ7H-imM3t2YeZwYwU&callback=initMap&libraries=&v=weekly"
+    async></script>
+<script>
+
+    var select = document.getElementById("selectPais");
+    var selectLocation = document.getElementById("selectPaisLocation");
+    country_list.forEach(element => afegirOpcio(element))
+    function afegirOpcio(pais) {
+        var option = document.createElement("option");
+        option.innerHTML = pais;
+        option.value = pais;
+        select.appendChild(option);
+
+        var optionLocation = document.createElement("option");
+        optionLocation.innerHTML = pais;
+        optionLocation.value = pais;
+        selectLocation.appendChild(optionLocation);
+    }
+
+
+    let map;
+    let pais = '{{ pais }}';
+    let paisFinal = "";
+    if (pais != "None") {
+        paisFinal = "?pais=" + pais;
+        selectLocation.value = pais;
+    }
+
+
+    function initMap() {
+        if (paisFinal == "") {
+            map = new google.maps.Map(document.getElementById("world-map"), {
+                center: { lat: 41.3, lng: -7.75 },
+                zoom: 3
+            });
+        } else {
+            map = new google.maps.Map(document.getElementById("world-map"), {
+                center: { lat: 41.3, lng: -7.75 },
+                zoom: 3,
+            });
+        }
+
+    }
+
+    var modal = new bootstrap.Modal(document.getElementById('modal'))
+    //modal.toggle();
+
+    function tornaACercar() {
+        let paisFinal = "";
+        if (document.getElementById("selectPais").value != "") {
+            paisFinal = "?pais=" + document.getElementById("selectPais").value;
+        }
+        agafaDades2(paisFinal);
+        modal.hide();
+    }
+
+    agafaDades2(paisFinal);
+    async function agafaDades2(paisRequest) {
+        http.call({
+            method: "get",
+            url: api.url + "/Locations" + paisRequest,
+            object: true,
+            headers: [
+                {
+                    header: "Authorization",
+                    value: "Token " + loginToken
+                    //ec12a4aba5efad5db763fb66c745be3caa6de822
+                },
+            ],
+            error: function (response) {
+                //console.log(response);
+            },
+            success: function (response) {
+                var array_poligon = [];
+                response.forEach(element => afegir(element));
+                function afegir(element) {
+                    if (element.localitat != "none") {
+                        console.log("element", element.localitat);
+                        var marker = new google.maps.Marker({
+                            position: { lat: element.latitud, lng: element.longitud },
+                            map: map,
+                            //icon: '{% static "img/flags.png"%}',
+                            content: "<h1>" + element.localitat + "</h1>",
+                        });
+
+                        var infoWindow = new google.maps.InfoWindow({
+                            content: "<h6>" + element.localitat + "</h6>"
+                        })
+
+                        marker.addListener('mouseover', function () {
+                            infoWindow.open(map, marker);
+                        });
+
+                        marker.addListener('mouseout', function () {
+                            infoWindow.close();
+                        });
+
+                        marker.addListener('click', function () {
+                            //location.replace("/dades?pais=" + element.pais + "&ciutat=" + element.localitat);
+                            location.href = "/data?pais=" + element.pais + "&ciutat=" + element.localitat;
+                        });
+
+                        //var objecte = { latLng: [element.latitud, element.longitud], name: element.localitat }
+                        array_poligon.push({ lat: element.latitud, lng: element.longitud });
+                    }
+                }
+                //map.setCenter({ lat: response[0].latitud, lng: response[0].longitud });
+                if (response.length != 0) {
+                    if (paisRequest != "") {
+                        const centre = new google.maps.Polygon({
+                            paths: array_poligon,
+                            strokeColor: "#FF0000",
+                            strokeOpacity: 0.8,
+                            strokeWeight: 2,
+                            fillColor: "#FF0000",
+                            fillOpacity: 0.35,
+                        });
+
+                        map.setCenter(polygonCenter(centre));
+                        map.setZoom(6);
+                    }
+                }
+
+
+            }
+        });
+
+    }
+
+
+
+    //_id("test")._load("http://localhost:8000/test");
+
+    //AIzaSyAng9Jc4kke3YJE8iZ7H-imM3t2YeZwYwU
+
+    /*
+    $(function () {
+        $('#world-map').vectorMap({
+            map: 'world_mill',
+            scaleColors: ['#C8EEFF', '#0071A4'],
+            normalizeFunction: 'polynomial',
+            hoverOpacity: 0.7,
+            hoverColor: false,
+            markerStyle: {
+                initial: {
+                    fill: '#F8E23B',
+                    stroke: '#383f47'
+                }
+            },
+            backgroundColor: '#383f47',
+            markers: [
+    
+            ]
+        });
+    });
+    */
+
+
+
+    //agafaDades();
+    async function agafaDades() {
+        http.call({
+            method: "get",
+            url: api.url + "/Locations",
+            object: true,
+            headers: [
+                {
+                    header: "Authorization",
+                    value: "Token " + loginToken
+                    //ec12a4aba5efad5db763fb66c745be3caa6de822
+                },
+            ],
+            error: function (response) {
+                //console.log(response);
+            },
+            success: function (response) {
+                var array_final = [];
+                response.forEach(element => afegir(element));
+                function afegir(element) {
+                    var objecte = { latLng: [element.latitud, element.longitud], name: element.localitat }
+                    array_final.push(objecte);
+                }
+
+                document.getElementById("world-map").innerHTML = "";
+                var mapObj = $('#world-map').vectorMap({
+                    map: 'world_mill',
+                    scaleColors: ['#C8EEFF', '#0071A4'],
+                    normalizeFunction: 'polynomial',
+                    hoverOpacity: 0.7,
+                    hoverColor: false,
+                    markerStyle: {
+                        initial: {
+                            fill: '#F8E23B',
+                            stroke: '#383f47'
+                        }
+                    },
+                    backgroundColor: '#383f47',
+                    markers: array_final
+                });
+
+            }
+        });
+
+    }
+
+
+    function polygonCenter(poly) {
+        var lowx,
+            highx,
+            lowy,
+            highy,
+            lats = [],
+            lngs = [],
+            vertices = poly.getPath();
+
+        for (var i = 0; i < vertices.length; i++) {
+            lngs.push(vertices.getAt(i).lng());
+            lats.push(vertices.getAt(i).lat());
+        }
+
+        lats.sort();
+        lngs.sort();
+        lowx = lats[0];
+        highx = lats[vertices.length - 1];
+        lowy = lngs[0];
+        highy = lngs[vertices.length - 1];
+        center_x = lowx + ((highx - lowx) / 2);
+        center_y = lowy + ((highy - lowy) / 2);
+        return (new google.maps.LatLng(center_x, center_y));
+    }
+
+</script>
+
+{% endblock %}

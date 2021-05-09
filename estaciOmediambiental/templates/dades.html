@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Data{% endblock %}
+
+{% block content %}
+
+
+<main class="p-0">
+    <br>
+    <br>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <h4>Select the view type</h4>
+                <select onchange="canviaVista(this.value); generaDadesParcials(); crearGrafics()"
+                    class="form-select mb-3" aria-label=".form-select-lg example">
+                    <option value="dia" selected>Day</option>
+                    <option value="mes">Month</option>
+                    <option value="any">Year</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <h4 id="titolSelectTemps">Select the day</h4>
+                <input onchange="generaDadesParcials(); crearGrafics()" id="inputData" type="date"
+                    class="form-control ">
+                <input onchange="generaDadesParcials(); crearGrafics()" id="inputMes" type="month"
+                    class="form-control d-none">
+                <select onchange="generaDadesParcials(); crearGrafics()" id="inputAny" class="form-select d-none"
+                    aria-label=".form-select-lg example">
+                </select>
+            </div>
+        </div>
+    </div>
+    <br>
+    <div class="container" id="main">
+    </div>
+    <br>
+    <br>
+</main>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.bundle.min.js"
+    integrity="sha512-SuxO9djzjML6b9w9/I07IWnLnQhgyYVSpHZx0JV97kGBfTIsUYlWflyuW4ypnvhBrslz1yJ3R+S14fdCWmSmSA=="
+    crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/locale/ca.js"></script>
+
+
+<script src="{% static 'dependencies/lodash.js' %}"></script>
+<script src="{% static 'scripts/js/ajax.js' %}"></script>
+<script src="{% static 'scripts/js/dash.js' %}"></script>
+
+<script>
+
+    //moment.locale('ca');
+    const pais = '{{ pais }}';
+    const ciutat = '{{ ciutat }}';
+    const filtreMes = "MMMM Do";
+    const filtreDia = "H";
+    const filtreAny = "MMMM";
+    const blau = "rgba(0, 153, 204, 0.2)";
+    const blauBorder = "rgba(0, 102, 204, 1)";
+    const vermell = "rgba(255, 51, 0, 0.2)";
+    const vermellBorder = "rgba(255, 0, 0, 1)";
+
+    let estatGrafics = "dia";
+
+    var dadesFinals;
+    var dadesParcials;
+
+    const datesAreOnSameDay = (first, second) =>
+        first.getFullYear() === second.getFullYear() &&
+        first.getMonth() === second.getMonth() &&
+        first.getDate() === second.getDate();
+
+    const datesAreOnSameMonth = (first, second) =>
+        first.getFullYear() === second.getFullYear() &&
+        first.getMonth() === second.getMonth();
+
+
+    if (pais == "" || ciutat == "") {
+        var h1 = document.createElement('h1');
+        h1.innerText = "No hi ha pais o ciutat seleccionada";
+        document.getElementById('main').append(h1);
+    } else {
+        agafaDades();
+    }
+
+    function generaDadesParcials() {
+
+        dadesParcials = {}
+        console.log(estatGrafics)
+
+        switch (estatGrafics) {
+            case "dia":
+                var valorActual = document.getElementById('inputData').value;
+
+                for (tipus in dadesFinals) {
+                    var llistat = [];
+                    for (registre in dadesFinals[tipus]) {
+                        //console.log(datesAreOnSameDay(new Date(dadesFinals[tipus][registre].hora), new Date(valorActual)))
+                        if (datesAreOnSameDay(new Date(dadesFinals[tipus][registre].hora), new Date(valorActual))) {
+                            llistat.push(dadesFinals[tipus][registre]);
+                        }
+                    }
+                    dadesParcials[tipus] = llistat
+                }
+
+                break;
+
+            case "mes":
+                var valorActual = document.getElementById('inputMes').value;
+                for (tipus in dadesFinals) {
+                    var llistat = [];
+                    for (registre in dadesFinals[tipus]) {
+                        //console.log(datesAreOnSameDay(new Date(dadesFinals[tipus][registre].hora), new Date(valorActual)))
+                        if (datesAreOnSameMonth(new Date(dadesFinals[tipus][registre].hora), new Date(valorActual))) {
+                            llistat.push(dadesFinals[tipus][registre]);
+                        }
+                    }
+                    dadesParcials[tipus] = llistat
+                }
+                break;
+
+            case "any":
+                var valorActual = document.getElementById('inputAny').value;
+                for (tipus in dadesFinals) {
+                    var llistat = [];
+                    for (registre in dadesFinals[tipus]) {
+                        //console.log(datesAreOnSameDay(new Date(dadesFinals[tipus][registre].hora), new Date(valorActual)))
+                        var nouAny = new Date(dadesFinals[tipus][registre].hora)
+                        if (nouAny.getFullYear() == valorActual) {
+                            llistat.push(dadesFinals[tipus][registre]);
+                        }
+                    }
+                    dadesParcials[tipus] = llistat
+                }
+                break;
+        }
+
+    }
+
+    function crearGrafics() {
+
+        var mainRefresh = document.getElementById('main');
+        mainRefresh.innerHTML = "";
+
+        var llistaResultant = {};
+
+        Object.keys(dadesParcials).forEach(function (key) {
+
+
+            var array = dadesParcials[key];
+            var identificador = JSON.parse(key)
+
+            var filtrePerAplicar;
+
+            switch (estatGrafics) {
+                case "dia":
+                    filtrePerAplicar = filtreDia
+                    break;
+
+                case "mes":
+                    filtrePerAplicar = filtreMes
+                    break;
+
+                case "any":
+                    filtrePerAplicar = filtreAny
+                    break;
+            }
+
+            const filterMoment = item => moment(item.hora, 'YYYY-MM-DD hh:mm').format(filtrePerAplicar);
+            const result = _.groupBy(dadesParcials[key], filterMoment);
+            llistaResultant[key] = result;
+
+        });
+
+        //console.log(llistaResultant)
+        for (llistaTipus in llistaResultant) {
+
+            var dataChart = JSON.parse(llistaTipus);
+
+
+            var mesuraTempsGrafic = ":00";
+            switch (estatGrafics) {
+                case "dia":
+                    mesuraTempsGrafic = ":00"
+                    break;
+
+                case "mes":
+                    mesuraTempsGrafic = ""
+                    break;
+
+                case "any":
+                    mesuraTempsGrafic = ''
+                    break;
+            }
+
+            var dadesChart = []
+            var keysChart = []
+            var colors = []
+            var borderColors = []
+
+            for (var registrePerUnitat in llistaResultant[llistaTipus]) {
+                var count = 0, sumHeight = 0;
+                for (var registreIndividual in llistaResultant[llistaTipus][registrePerUnitat]) {
+
+                    sumHeight += parseInt(llistaResultant[llistaTipus][registrePerUnitat][registreIndividual].valor);
+                    count += 1;
+                }
+                var resultat = sumHeight / count;
+
+                keysChart.push(registrePerUnitat + mesuraTempsGrafic);
+                dadesChart.push(resultat);
+
+                //console.log(resultat, 'minim', dataChart.valorMinimPotable,  )
+                if (resultat > dataChart.valorMaximPotable || resultat < dataChart.valorMinimPotable) {
+                    colors.push(vermell);
+                    borderColors.push(vermellBorder);
+                } else {
+                    colors.push(blau);
+                    borderColors.push(blauBorder);
+                }
+
+            }
+
+
+            //       Creacio de charts
+            var main = document.getElementById('main');
+            var h2 = document.createElement('h2');
+            h2.innerText = dataChart.tipus;
+            main.appendChild(h2);
+            var ctx = document.createElement('canvas');
+            ctx.classList.add('mb-2');
+            main.appendChild(ctx);
+            var br = document.createElement('br');
+            main.appendChild(br);
+            var chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: keysChart,
+                    datasets: [{
+                        label: dataChart.tipus + " " + dataChart.unitatMesura,
+                        data: dadesChart,
+                        backgroundColor: colors,
+                        borderColor: borderColors,
+                        borderWidth: 1
+                    }],
+                },
+                options: {
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true
+                            }
+                        }]
+                    }
+                }
+            });
+
+
+
+        }
+    }
+
+    async function agafaDades() {
+        http.call({
+            method: "get",
+            url: api.url + "/DataByCity?ciutat=" + ciutat + "&pais=" + pais,
+            object: true,
+            headers: [
+                {
+                    header: "Authorization",
+                    value: "Token " + loginToken,
+                    //ec12a4aba5efad5db763fb66c745be3caa6de822
+                },
+            ],
+            error: function (response) {
+                var h1 = document.createElement('h1');
+                h1.innerText = "No hi dades per la localitzacio seleccionada";
+                document.getElementById('main').append(h1);
+            },
+            success: function (response) {
+                if (response == undefined) {
+                    var h1 = document.createElement('h1');
+                    h1.innerText = "No hi dades per la localitzacio seleccionada";
+                    document.getElementById('main').append(h1);
+                }
+                //console.log(response.length);
+                dadesFinals = response;
+                generaDadesParcials();
+                crearGrafics();
+
+            },
+        });
+    }
+
+
+    Date.prototype.toDateInputValue = (function () {
+        var local = new Date(this);
+        local.setMinutes(this.getMinutes() - this.getTimezoneOffset());
+        return local.toJSON().slice(0, 10);
+    });
+    var today = new Date();
+    document.getElementById('inputData').value = new Date().toDateInputValue();
+    document.getElementById('inputMes').value = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, '0');
+
+    var inputAny = document.getElementById('inputAny');
+    var primer = true;
+    for (i = today.getFullYear(); i > 2019; i--) {
+        var option = document.createElement('option');
+        option.value = i;
+        option.innerText = i;
+        if (primer) {
+            option.setAttribute('selected', true);
+        }
+        primer = false;
+        inputAny.append(option);
+    }
+    //console.log(today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, '0'))
+
+    function canviaVista(valor) {
+        switch (valor) {
+            case "dia":
+                document.getElementById("inputData").classList.remove('d-none');
+                document.getElementById("inputMes").classList.add('d-none');
+                document.getElementById("inputAny").classList.add('d-none');
+                document.getElementById("titolSelectTemps").innerText = "Select the day";
+                estatGrafics = "dia";
+                break;
+
+            case "mes":
+                document.getElementById("inputData").classList.add('d-none');
+                document.getElementById("inputMes").classList.remove('d-none');
+                document.getElementById("inputAny").classList.add('d-none');
+                document.getElementById("titolSelectTemps").innerText = "Select the month";
+                estatGrafics = "mes";
+                break;
+
+            case "any":
+                document.getElementById("inputData").classList.add('d-none');
+                document.getElementById("inputMes").classList.add('d-none');
+                document.getElementById("inputAny").classList.remove('d-none');
+                document.getElementById("titolSelectTemps").innerText = "Select the year";
+                estatGrafics = "any";
+                break;
+        }
+    }
+
+
+</script>
+
+
+{% endblock %}

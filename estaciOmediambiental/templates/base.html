@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,700&display=swap" rel="stylesheet" />
+    <title>{% block title %}{% endblock %}</title>
+
+    {% load static %} {% load pwa %} {% progressive_web_app_meta %}
+
+    <!-- Estils -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous" />
+    <link rel="stylesheet" href="{% static 'styles/site.css' %}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.css"
+        integrity="sha512-/zs32ZEJh+/EO2N1b0PEdoA10JkdC3zJ8L5FTiQu82LR9S/rOQNfQN7U59U9BC12swNeRAz3HSzIL2vpp4fv3w=="
+        crossorigin="anonymous" />
+    {% block styles %}{% endblock %}
+    <!-- Final estils -->
+</head>
+
+<body>
+    {% csrf_token %}
+    <script>
+        const csrftoken = document.querySelector("[name=csrfmiddlewaretoken]")
+            .value;
+    </script>
+    <script src="{% static 'dades/api.js' %}"></script>
+    <script src="{% static 'scripts/js/cookies.js' %}"></script>
+    <script>
+        const loginToken = getCookie('loginToken')
+    </script>
+
+    {% comment %} NAVBAR {% endcomment %}
+
+    <nav class="navbar topbar shadow fixed-top navbar-expand-sm navbar-dark p-3 d-flex">
+        <div class="icon d-inline-block" style="color: white">
+            <img src="{% static 'img/icon.png' %}" height="40px" width="40px" alt="">
+        </div>
+        <div class="flex-fill"></div>
+        {% if map %}
+        <div class="notificacions d-inline-block m-2" onclick="modal.toggle();" style="color: white;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-map"
+                viewBox="0 0 16 16">
+                <path fill-rule="evenodd"
+                    d="M15.817.113A.5.5 0 0 1 16 .5v14a.5.5 0 0 1-.402.49l-5 1a.502.502 0 0 1-.196 0L5.5 15.01l-4.902.98A.5.5 0 0 1 0 15.5v-14a.5.5 0 0 1 .402-.49l5-1a.5.5 0 0 1 .196 0L10.5.99l4.902-.98a.5.5 0 0 1 .415.103zM10 1.91l-4-.8v12.98l4 .8V1.91zm1 12.98l4-.8V1.11l-4 .8v12.98zm-6-.8V1.11l-4 .8v12.98l4-.8z" />
+            </svg>
+        </div>
+        {% endif %}
+
+        <div onclick="setCookie('loginToken', '', 0); location.href = '/'" class="onnoffbutton user d-inline-block m-2"
+            style="color: white">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor"
+                class="bi bi-arrow-bar-left" viewBox="0 0 16 16">
+                <path fill-rule="evenodd"
+                    d="M12.5 15a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 1 0v13a.5.5 0 0 1-.5.5zM10 8a.5.5 0 0 1-.5.5H3.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L3.707 7.5H9.5a.5.5 0 0 1 .5.5z" />
+            </svg>
+        </div>
+
+        <div onclick="window.location.href = '/logIn';" class="onnoffbutton user d-inline-block m-2"
+            style="color: white">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-person-fill"
+                viewBox="0 0 16 16">
+                <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+            </svg>
+        </div>
+    </nav>
+
+    <nav class="snavbar p-0">
+        <ul class="snavbar-nav">
+            <li class="logo">
+                <a href="/map" class="snav-link">
+                    <span class="link-text logo-text">HOME</span>
+                    <svg aria-hidden="true" focusable="false" data-prefix="fad" data-icon="angle-double-right"
+                        role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"
+                        class="svg-inline--fa fa-angle-double-right fa-w-14 fa-5x">
+                        <g class="fa-group">
+                            <path fill="currentColor"
+                                d="M224 273L88.37 409a23.78 23.78 0 0 1-33.8 0L32 386.36a23.94 23.94 0 0 1 0-33.89l96.13-96.37L32 159.73a23.94 23.94 0 0 1 0-33.89l22.44-22.79a23.78 23.78 0 0 1 33.8 0L223.88 239a23.94 23.94 0 0 1 .1 34z"
+                                class="fa-secondary"></path>
+                            <path fill="currentColor"
+                                d="M415.89 273L280.34 409a23.77 23.77 0 0 1-33.79 0L224 386.26a23.94 23.94 0 0 1 0-33.89L320.11 256l-96-96.47a23.94 23.94 0 0 1 0-33.89l22.52-22.59a23.77 23.77 0 0 1 33.79 0L416 239a24 24 0 0 1-.11 34z"
+                                class="fa-primary"></path>
+                        </g>
+                    </svg>
+                </a>
+            </li>
+
+            <li class="snav-item">
+                <a href="/yourDisplays" class="snav-link">
+                    <svg aria-hidden="true" focusable="false" data-prefix="fab" data-icon="raspberry-pi" role="img"
+                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 407 512"
+                        class="svg-inline--fa fa-raspberry-pi fa-w-13 fa-3x">
+                        <path fill="currentColor"
+                            d="M372 232.5l-3.7-6.5c.1-46.4-21.4-65.3-46.5-79.7 7.6-2 15.4-3.6 17.6-13.2 13.1-3.3 15.8-9.4 17.1-15.8 3.4-2.3 14.8-8.7 13.6-19.7 6.4-4.4 10-10.1 8.1-18.1 6.9-7.5 8.7-13.7 5.8-19.4 8.3-10.3 4.6-15.6 1.1-20.9 6.2-11.2.7-23.2-16.6-21.2-6.9-10.1-21.9-7.8-24.2-7.8-2.6-3.2-6-6-16.5-4.7-6.8-6.1-14.4-5-22.3-2.1-9.3-7.3-15.5-1.4-22.6.8C271.6.6 269 5.5 263.5 7.6c-12.3-2.6-16.1 3-22 8.9l-6.9-.1c-18.6 10.8-27.8 32.8-31.1 44.1-3.3-11.3-12.5-33.3-31.1-44.1l-6.9.1c-5.9-5.9-9.7-11.5-22-8.9-5.6-2-8.1-7-19.4-3.4-4.6-1.4-8.9-4.4-13.9-4.3-2.6.1-5.5 1-8.7 3.5-7.9-3-15.5-4-22.3 2.1-10.5-1.3-14 1.4-16.5 4.7-2.3 0-17.3-2.3-24.2 7.8C21.2 16 15.8 28 22 39.2c-3.5 5.4-7.2 10.7 1.1 20.9-2.9 5.7-1.1 11.9 5.8 19.4-1.8 8 1.8 13.7 8.1 18.1-1.2 11 10.2 17.4 13.6 19.7 1.3 6.4 4 12.4 17.1 15.8 2.2 9.5 10 11.2 17.6 13.2-25.1 14.4-46.6 33.3-46.5 79.7l-3.7 6.5c-28.8 17.2-54.7 72.7-14.2 117.7 2.6 14.1 7.1 24.2 11 35.4 5.9 45.2 44.5 66.3 54.6 68.8 14.9 11.2 30.8 21.8 52.2 29.2C159 504.2 181 512 203 512h1c22.1 0 44-7.8 64.2-28.4 21.5-7.4 37.3-18 52.2-29.2 10.2-2.5 48.7-23.6 54.6-68.8 3.9-11.2 8.4-21.3 11-35.4 40.6-45.1 14.7-100.5-14-117.7zm-22.2-8c-1.5 18.7-98.9-65.1-82.1-67.9 45.7-7.5 83.6 19.2 82.1 67.9zm-43 93.1c-24.5 15.8-59.8 5.6-78.8-22.8s-14.6-64.2 9.9-80c24.5-15.8 59.8-5.6 78.8 22.8s14.6 64.2-9.9 80zM238.9 29.3c.8 4.2 1.8 6.8 2.9 7.6 5.4-5.8 9.8-11.7 16.8-17.3 0 3.3-1.7 6.8 2.5 9.4 3.7-5 8.8-9.5 15.5-13.3-3.2 5.6-.6 7.3 1.2 9.6 5.1-4.4 10-8.8 19.4-12.3-2.6 3.1-6.2 6.2-2.4 9.8 5.3-3.3 10.6-6.6 23.1-8.9-2.8 3.1-8.7 6.3-5.1 9.4 6.6-2.5 14-4.4 22.1-5.4-3.9 3.2-7.1 6.3-3.9 8.8 7.1-2.2 16.9-5.1 26.4-2.6l-6 6.1c-.7.8 14.1.6 23.9.8-3.6 5-7.2 9.7-9.3 18.2 1 1 5.8.4 10.4 0-4.7 9.9-12.8 12.3-14.7 16.6 2.9 2.2 6.8 1.6 11.2.1-3.4 6.9-10.4 11.7-16 17.3 1.4 1 3.9 1.6 9.7.9-5.2 5.5-11.4 10.5-18.8 15 1.3 1.5 5.8 1.5 10 1.6-6.7 6.5-15.3 9.9-23.4 14.2 4 2.7 6.9 2.1 10 2.1-5.7 4.7-15.4 7.1-24.4 10 1.7 2.7 3.4 3.4 7.1 4.1-9.5 5.3-23.2 2.9-27 5.6.9 2.7 3.6 4.4 6.7 5.8-15.4.9-57.3-.6-65.4-32.3 15.7-17.3 44.4-37.5 93.7-62.6-38.4 12.8-73 30-102 53.5-34.3-15.9-10.8-55.9 5.8-71.8zm-34.4 114.6c24.2-.3 54.1 17.8 54 34.7-.1 15-21 27.1-53.8 26.9-32.1-.4-53.7-15.2-53.6-29.8 0-11.9 26.2-32.5 53.4-31.8zm-123-12.8c3.7-.7 5.4-1.5 7.1-4.1-9-2.8-18.7-5.3-24.4-10 3.1 0 6 .7 10-2.1-8.1-4.3-16.7-7.7-23.4-14.2 4.2-.1 8.7 0 10-1.6-7.4-4.5-13.6-9.5-18.8-15 5.8.7 8.3.1 9.7-.9-5.6-5.6-12.7-10.4-16-17.3 4.3 1.5 8.3 2 11.2-.1-1.9-4.2-10-6.7-14.7-16.6 4.6.4 9.4 1 10.4 0-2.1-8.5-5.8-13.3-9.3-18.2 9.8-.1 24.6 0 23.9-.8l-6-6.1c9.5-2.5 19.3.4 26.4 2.6 3.2-2.5-.1-5.6-3.9-8.8 8.1 1.1 15.4 2.9 22.1 5.4 3.5-3.1-2.3-6.3-5.1-9.4 12.5 2.3 17.8 5.6 23.1 8.9 3.8-3.6.2-6.7-2.4-9.8 9.4 3.4 14.3 7.9 19.4 12.3 1.7-2.3 4.4-4 1.2-9.6 6.7 3.8 11.8 8.3 15.5 13.3 4.1-2.6 2.5-6.2 2.5-9.4 7 5.6 11.4 11.5 16.8 17.3 1.1-.8 2-3.4 2.9-7.6 16.6 15.9 40.1 55.9 6 71.8-29-23.5-63.6-40.7-102-53.5 49.3 25 78 45.3 93.7 62.6-8 31.8-50 33.2-65.4 32.3 3.1-1.4 5.8-3.2 6.7-5.8-4-2.8-17.6-.4-27.2-5.6zm60.1 24.1c16.8 2.8-80.6 86.5-82.1 67.9-1.5-48.7 36.5-75.5 82.1-67.9zM38.2 342c-23.7-18.8-31.3-73.7 12.6-98.3 26.5-7 9 107.8-12.6 98.3zm91 98.2c-13.3 7.9-45.8 4.7-68.8-27.9-15.5-27.4-13.5-55.2-2.6-63.4 16.3-9.8 41.5 3.4 60.9 25.6 16.9 20 24.6 55.3 10.5 65.7zm-26.4-119.7c-24.5-15.8-28.9-51.6-9.9-80s54.3-38.6 78.8-22.8 28.9 51.6 9.9 80c-19.1 28.4-54.4 38.6-78.8 22.8zM205 496c-29.4 1.2-58.2-23.7-57.8-32.3-.4-12.7 35.8-22.6 59.3-22 23.7-1 55.6 7.5 55.7 18.9.5 11-28.8 35.9-57.2 35.4zm58.9-124.9c.2 29.7-26.2 53.8-58.8 54-32.6.2-59.2-23.8-59.4-53.4v-.6c-.2-29.7 26.2-53.8 58.8-54 32.6-.2 59.2 23.8 59.4 53.4v.6zm82.2 42.7c-25.3 34.6-59.6 35.9-72.3 26.3-13.3-12.4-3.2-50.9 15.1-72 20.9-23.3 43.3-38.5 58.9-26.6 10.5 10.3 16.7 49.1-1.7 72.3zm22.9-73.2c-21.5 9.4-39-105.3-12.6-98.3 43.9 24.7 36.3 79.6 12.6 98.3z"
+                            class="fa-secondary"></path>
+                    </svg>
+                    <span class="link-text">Displays</span>
+                </a>
+            </li>
+
+            <li class="snav-item">
+                <a href="/map" class="snav-link">
+                    <svg aria-hidden="true" focusable="false" data-prefix="fad" data-icon="alien-monster" role="img"
+                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"
+                        class="svg-inline--fa fa-alien-monster fa-w-18 fa-9x">
+                        <!--
+                        <g class="fa-group">
+                            <path fill="currentColor"
+                                d="M560,128H528a15.99954,15.99954,0,0,0-16,16v80H480V176a15.99954,15.99954,0,0,0-16-16H416V96h48a16.00079,16.00079,0,0,0,16-16V48a15.99954,15.99954,0,0,0-16-16H432a15.99954,15.99954,0,0,0-16,16V64H368a15.99954,15.99954,0,0,0-16,16v48H224V80a15.99954,15.99954,0,0,0-16-16H160V48a15.99954,15.99954,0,0,0-16-16H112A15.99954,15.99954,0,0,0,96,48V80a16.00079,16.00079,0,0,0,16,16h48v64H112a15.99954,15.99954,0,0,0-16,16v48H64V144a15.99954,15.99954,0,0,0-16-16H16A15.99954,15.99954,0,0,0,0,144V272a16.00079,16.00079,0,0,0,16,16H64v80a16.00079,16.00079,0,0,0,16,16h48v80a16.00079,16.00079,0,0,0,16,16h96a16.00079,16.00079,0,0,0,16-16V432a15.99954,15.99954,0,0,0-16-16H192V384H384v32H336a15.99954,15.99954,0,0,0-16,16v32a16.00079,16.00079,0,0,0,16,16h96a16.00079,16.00079,0,0,0,16-16V384h48a16.00079,16.00079,0,0,0,16-16V288h48a16.00079,16.00079,0,0,0,16-16V144A15.99954,15.99954,0,0,0,560,128ZM224,320H160V224h64Zm192,0H352V224h64Z"
+                                class="fa-secondary"></path>
+                            <path fill="currentColor" d="M160,320h64V224H160Zm192-96v96h64V224Z" class="fa-primary">
+                            </path>
+                        </g>
+                        -->
+                        <svg aria-hidden="true" focusable="false" data-prefix="fad" data-icon="map-marked-alt"
+                            role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"
+                            class="svg-inline--fa fa-map-marked-alt fa-w-18 fa-3x">
+                            <g class="fa-group">
+                                <path fill="currentColor"
+                                    d="M554.06 161.16L416 224v288l139.88-55.95A32 32 0 0 0 576 426.34V176a16 16 0 0 0-21.94-14.84zM20.12 216A32 32 0 0 0 0 245.66V496a16 16 0 0 0 21.94 14.86L160 448V214.92a302.84 302.84 0 0 1-21.25-46.42zM288 359.67a47.78 47.78 0 0 1-36.51-17C231.83 319.51 210.92 293.09 192 266v182l192 64V266c-18.92 27.09-39.82 53.52-59.49 76.72A47.8 47.8 0 0 1 288 359.67z"
+                                    class="fa-secondary"></path>
+                                <path fill="currentColor"
+                                    d="M288 0a126 126 0 0 0-126 126c0 56.26 82.35 158.8 113.9 196a15.77 15.77 0 0 0 24.2 0C331.65 284.8 414 182.26 414 126A126 126 0 0 0 288 0zm0 168a42 42 0 1 1 42-42 42 42 0 0 1-42 42z"
+                                    class="fa-primary"></path>
+                            </g>
+                        </svg>
+                    </svg>
+                    <span class="link-text">World Map</span>
+                </a>
+            </li>
+
+            <li class="snav-item">
+                <a style="cursor: pointer;" onclick="location.href = api.admin" class="snav-link">
+                    <svg aria-hidden="true" focusable="false" data-prefix="fad" data-icon="user-cog" role="img"
+                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"
+                        class="svg-inline--fa fa-user-cog fa-w-20 fa-3x">
+                        <g class="fa-group">
+                            <path fill="currentColor"
+                                d="M636.3 388.2l-25.8-14.9a117.31 117.31 0 0 0 0-42.6l25.8-14.9a7.24 7.24 0 0 0 3.3-8.5 150.07 150.07 0 0 0-33.2-57.4 7.29 7.29 0 0 0-9-1.4l-25.8 14.9a117.4 117.4 0 0 0-36.9-21.3v-29.8a7.28 7.28 0 0 0-5.7-7.1 150.88 150.88 0 0 0-66.2 0 7.28 7.28 0 0 0-5.7 7.1v29.8a117.4 117.4 0 0 0-36.9 21.3l-25.8-14.9a7.31 7.31 0 0 0-9 1.4 150.07 150.07 0 0 0-33.2 57.4 7.37 7.37 0 0 0 3.3 8.5l25.8 14.9a117.31 117.31 0 0 0 0 42.6l-25.8 14.9a7.24 7.24 0 0 0-3.3 8.5 150.82 150.82 0 0 0 33.2 57.4 7.29 7.29 0 0 0 9 1.4l25.8-14.9a117.4 117.4 0 0 0 36.9 21.3v29.8a7.28 7.28 0 0 0 5.7 7.1 150.88 150.88 0 0 0 66.2 0 7.28 7.28 0 0 0 5.7-7.1v-29.8a117.4 117.4 0 0 0 36.9-21.3l25.8 14.9a7.31 7.31 0 0 0 9-1.4 150.07 150.07 0 0 0 33.2-57.4 7.37 7.37 0 0 0-3.3-8.5zM496 400.5a48.5 48.5 0 1 1 48.5-48.5 48.55 48.55 0 0 1-48.5 48.5z"
+                                class="fa-secondary"></path>
+                            <path fill="currentColor"
+                                d="M425.2 491.7v-9.2c-2.3-1.2-4.6-2.6-6.8-3.9l-7.9 4.6a39.23 39.23 0 0 1-48.5-7.3 182.34 182.34 0 0 1-40.2-69.6 39.11 39.11 0 0 1 17.9-45.7l7.9-4.6q-.15-3.9 0-7.8l-7.9-4.6a39.07 39.07 0 0 1-17.9-45.7c.9-2.9 2.2-5.8 3.2-8.7-3.8-.3-7.5-1.2-11.4-1.2h-16.7a174.08 174.08 0 0 1-145.8 0h-16.7A134.43 134.43 0 0 0 0 422.4V464a48 48 0 0 0 48 48h352a47.94 47.94 0 0 0 27.2-8.5 39 39 0 0 1-2-11.8zM224 256A128 128 0 1 0 96 128a128 128 0 0 0 128 128z"
+                                class="fa-primary"></path>
+                        </g>
+                    </svg>
+                    <span class="link-text">Admin</span>
+                </a>
+            </li>
+
+
+            <li class="snav-item" id="themeButton">
+                <a href="#" class="snav-link">
+                    <svg class="theme-icon" id="lightIcon" aria-hidden="true" focusable="false" data-prefix="fad"
+                        data-icon="moon-stars" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"
+                        class="svg-inline--fa fa-moon-stars fa-w-16 fa-7x">
+                        <g class="fa-group">
+                            <path fill="currentColor"
+                                d="M320 32L304 0l-16 32-32 16 32 16 16 32 16-32 32-16zm138.7 149.3L432 128l-26.7 53.3L352 208l53.3 26.7L432 288l26.7-53.3L512 208z"
+                                class="fa-secondary"></path>
+                            <path fill="currentColor"
+                                d="M332.2 426.4c8.1-1.6 13.9 8 8.6 14.5a191.18 191.18 0 0 1-149 71.1C85.8 512 0 426 0 320c0-120 108.7-210.6 227-188.8 8.2 1.6 10.1 12.6 2.8 16.7a150.3 150.3 0 0 0-76.1 130.8c0 94 85.4 165.4 178.5 147.7z"
+                                class="fa-primary"></path>
+                        </g>
+                    </svg>
+                    <svg class="theme-icon" id="solarIcon" aria-hidden="true" focusable="false" data-prefix="fad"
+                        data-icon="sun" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"
+                        class="svg-inline--fa fa-sun fa-w-16 fa-7x">
+                        <g class="fa-group">
+                            <path fill="currentColor"
+                                d="M502.42 240.5l-94.7-47.3 33.5-100.4c4.5-13.6-8.4-26.5-21.9-21.9l-100.4 33.5-47.41-94.8a17.31 17.31 0 0 0-31 0l-47.3 94.7L92.7 70.8c-13.6-4.5-26.5 8.4-21.9 21.9l33.5 100.4-94.7 47.4a17.31 17.31 0 0 0 0 31l94.7 47.3-33.5 100.5c-4.5 13.6 8.4 26.5 21.9 21.9l100.41-33.5 47.3 94.7a17.31 17.31 0 0 0 31 0l47.31-94.7 100.4 33.5c13.6 4.5 26.5-8.4 21.9-21.9l-33.5-100.4 94.7-47.3a17.33 17.33 0 0 0 .2-31.1zm-155.9 106c-49.91 49.9-131.11 49.9-181 0a128.13 128.13 0 0 1 0-181c49.9-49.9 131.1-49.9 181 0a128.13 128.13 0 0 1 0 181z"
+                                class="fa-secondary"></path>
+                            <path fill="currentColor" d="M352 256a96 96 0 1 1-96-96 96.15 96.15 0 0 1 96 96z"
+                                class="fa-primary"></path>
+                        </g>
+                    </svg>
+                    <svg class="theme-icon" id="darkIcon" aria-hidden="true" focusable="false" data-prefix="fad"
+                        data-icon="sunglasses" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"
+                        class="svg-inline--fa fa-sunglasses fa-w-18 fa-7x">
+                        <g class="fa-group">
+                            <path fill="currentColor"
+                                d="M574.09 280.38L528.75 98.66a87.94 87.94 0 0 0-113.19-62.14l-15.25 5.08a16 16 0 0 0-10.12 20.25L395.25 77a16 16 0 0 0 20.22 10.13l13.19-4.39c10.87-3.63 23-3.57 33.15 1.73a39.59 39.59 0 0 1 20.38 25.81l38.47 153.83a276.7 276.7 0 0 0-81.22-12.47c-34.75 0-74 7-114.85 26.75h-73.18c-40.85-19.75-80.07-26.75-114.85-26.75a276.75 276.75 0 0 0-81.22 12.45l38.47-153.8a39.61 39.61 0 0 1 20.38-25.82c10.15-5.29 22.28-5.34 33.15-1.73l13.16 4.39A16 16 0 0 0 180.75 77l5.06-15.19a16 16 0 0 0-10.12-20.21l-15.25-5.08A87.95 87.95 0 0 0 47.25 98.65L1.91 280.38A75.35 75.35 0 0 0 0 295.86v70.25C0 429 51.59 480 115.19 480h37.12c60.28 0 110.38-45.94 114.88-105.37l2.93-38.63h35.76l2.93 38.63c4.5 59.43 54.6 105.37 114.88 105.37h37.12C524.41 480 576 429 576 366.13v-70.25a62.67 62.67 0 0 0-1.91-15.5zM203.38 369.8c-2 25.9-24.41 46.2-51.07 46.2h-37.12C87 416 64 393.63 64 366.11v-37.55a217.35 217.35 0 0 1 72.59-12.9 196.51 196.51 0 0 1 69.91 12.9zM512 366.13c0 27.5-23 49.87-51.19 49.87h-37.12c-26.69 0-49.1-20.3-51.07-46.2l-3.12-41.24a196.55 196.55 0 0 1 69.94-12.9A217.41 217.41 0 0 1 512 328.58z"
+                                class="fa-secondary"></path>
+                            <path fill="currentColor"
+                                d="M64.19 367.9c0-.61-.19-1.18-.19-1.8 0 27.53 23 49.9 51.19 49.9h37.12c26.66 0 49.1-20.3 51.07-46.2l3.12-41.24c-14-5.29-28.31-8.38-42.78-10.42zm404-50l-95.83 47.91.3 4c2 25.9 24.38 46.2 51.07 46.2h37.12C489 416 512 393.63 512 366.13v-37.55a227.76 227.76 0 0 0-43.85-10.66z"
+                                class="fa-primary"></path>
+                        </g>
+                    </svg>
+                    <span class="link-text">Theme</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    {% block content %}{% endblock %}
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js"
+        integrity="sha384-GNFwBvfVxBkLMJpYMOABq3c+d3KnQxudP/mGPkzpZSTYykLBNsZEnG2D9G/X/+7D" crossorigin="anonymous"
+        async></script>
+    <script src="{% static 'scripts/js/navbar.js' %}"></script>
+    <script src="{% static 'dependencies/lodash.js' %}"></script>
+
+    {% block scripts %}{% endblock %}
+    <!-- Final ecripts -->
+</body>
+
+</html>
