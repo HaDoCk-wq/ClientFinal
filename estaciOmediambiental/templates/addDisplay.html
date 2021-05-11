@@ -169,7 +169,7 @@
             console.log(response);
             var stringOptionsPaisos = "";
             for (let i = 0; i < response.length; i++) {
-                stringOptionsPaisos += `<option value="${i}">${response[i].localitat} | ${response[i].pais} | Lat: ${response[i].latitud}, Long: ${response[i].longitud}</option>`;
+                stringOptionsPaisos += `<option value="${response[i].id}">${response[i].localitat} | ${response[i].pais} | Lat: ${response[i].latitud}, Long: ${response[i].longitud}</option>`;
             }
 
             document.getElementById("datalistLocation").innerHTML = stringOptionsPaisos;
